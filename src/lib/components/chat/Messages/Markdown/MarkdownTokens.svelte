@@ -8,6 +8,7 @@
 
 	import { marked, type Token } from 'marked';
 	import { copyToClipboard, unescapeHtml } from '$lib/utils';
+	import { exportMarkdownTableToXlsx } from '$lib/utils/exportToXlsx';
 
 	import { WEBUI_BASE_URL } from '$lib/constants';
 	import { settings } from '$lib/stores';
@@ -136,6 +137,18 @@
 		// Use FileSaver.js's saveAs function to save the generated CSV file.
 		saveAs(blob, `table-${id}-${tokenIdx}.csv`);
 	};
+
+	const exportTableToXlsxHandler = (token, tokenIdx = 0) => {
+		// Extract plain-text headers
+		const headers = token.header.map((headerCell) => decode(headerCell.text));
+
+		// Extract plain-text rows
+		const rows = token.rows.map((row) =>
+			row.map((cell) => decode(cell.tokens.map((t) => t.text).join('')))
+		);
+
+		exportMarkdownTableToXlsx(headers, rows, `table-${id}-${tokenIdx}`);
+	};
 </script>
 
 <!-- {JSON.stringify(tokens)} -->
@@ -258,6 +271,18 @@
 						on:click={(e) => {
 							e.stopPropagation();
 							exportTableToCSVHandler(token, tokenIdx);
+						}}
+					>
+						<Download className=" size-3.5" strokeWidth="1.5" />
+					</button>
+				</Tooltip>
+
+				<Tooltip content={$i18n.t('Export to Excel (.xlsx)')}>
+					<button
+						class="p-1 rounded-lg bg-transparent transition"
+						on:click={(e) => {
+							e.stopPropagation();
+							exportTableToXlsxHandler(token, tokenIdx);
 						}}
 					>
 						<Download className=" size-3.5" strokeWidth="1.5" />

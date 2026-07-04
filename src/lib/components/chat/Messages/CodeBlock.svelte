@@ -13,6 +13,7 @@
 		renderVegaVisualization,
 		unescapeHtml
 	} from '$lib/utils';
+	import { exportDelimitedToXlsx, exportXlsxSpec } from '$lib/utils/exportToXlsx';
 
 	import 'highlight.js/styles/github-dark.min.css';
 	import equal from 'fast-deep-equal';
@@ -102,6 +103,20 @@
 
 	const previewCode = () => {
 		onPreview(code);
+	};
+
+	const exportToExcel = async () => {
+		try {
+			if (lang.toLowerCase() === 'xlsx') {
+				await exportXlsxSpec(_code);
+			} else {
+				const delimiter = lang.toLowerCase() === 'tsv' ? '\t' : ',';
+				await exportDelimitedToXlsx(_code, 'export', delimiter);
+			}
+		} catch (e) {
+			console.error('Export to Excel failed', e);
+			toast.error($i18n.t('Export failed: {{error}}', { error: (e as Error)?.message ?? String(e) }));
+		}
 	};
 
 	const checkPythonCode = (str) => {
@@ -518,6 +533,15 @@
 						class="copy-code-button bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
 						on:click={copyCode}>{copied ? $i18n.t('Copied') : $i18n.t('Copy')}</button
 					>
+
+					{#if ['csv', 'tsv', 'xlsx'].includes(lang.toLowerCase())}
+						<button
+							class="flex gap-1 items-center export-xlsx-button bg-none border-none transition rounded-md px-1.5 py-0.5 bg-white dark:bg-black"
+							on:click={exportToExcel}
+						>
+							<div>{$i18n.t('Export to Excel')}</div>
+						</button>
+					{/if}
 
 					{#if preview && ['html', 'svg'].includes(lang)}
 						<button
